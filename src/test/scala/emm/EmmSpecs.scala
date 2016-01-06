@@ -79,6 +79,14 @@ object EmmSpecs extends Specification {
       "inner" >> {
         type E = Option |: Free[List, ?] |: Base
 
+        // E#Point[Int]
+        // Option[Free[List, Int]]
+        //val goo: Free[List, Int] = Free.pure[List, Int](42)
+        val boo: Emm[List |: Base, Int] = ???//goo.liftM[E]
+        //val foo: emm.|:[Option,emm.|:[List,emm.Base]]#Point[Int]/*Build[Lambda[X => X],Int]*/ = boo.run
+        val foo = boo.run
+        //val foo: (Option |: List |: Base)#Point[Int] = boo.run
+
         Free.pure[List, Int](42).liftM[E].run must beLike {
           case Some(f) => f runM identity mustEqual List(42)
         }

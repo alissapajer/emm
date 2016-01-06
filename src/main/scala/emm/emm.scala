@@ -1016,7 +1016,7 @@ final case class Emm[C <: Effects, A](run: C#Point[A]) {
   def collapse(implicit C: Collapser[A, C]): Emm[C.Out, C.A] = Emm(C(run))*/
 }
 
-/*trait EmmLowPriorityImplicits1 {
+trait EmmLowPriorityImplicits1 {
   import Effects._
 
   implicit def functorInstance[C <: Effects](implicit C: Mapper[C]): Functor[Emm[C, ?]] = new Functor[Emm[C, ?]] {
@@ -1048,4 +1048,4 @@ object Emm extends EmmLowPriorityImplicits2 {
     def foldRight[A, B](fa: Emm[C, A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = C.foldRight(fa.run, lb)(f)
 
   }
-}*/
+}

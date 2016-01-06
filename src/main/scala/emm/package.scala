@@ -7,9 +7,9 @@ package object emm {
 /*
   implicit class LiftSyntax[E](val e: E) extends AnyVal {
     def liftM[C <: Effects](implicit L: Lifter[E, C]): Emm[C, L.Out] = Emm(L(e))
-  }
+  }*/
 
   implicit class WrapSyntax[E](val e: E) extends AnyVal {
     def wrapM[C <: Effects](implicit W: Wrapper[E, C]): Emm[C, W.A] = Emm[C, W.A](W(e))
-  }*/
+  }
 }

@@ -213,10 +213,12 @@ object Effects {
     }
   }
 
-  /*trait Traverser[C <: Effects] {
-    def traverse[G[_]: Applicative, A, B](ca: C#Point[A])(f: A => G[B]): G[C#Point[B]]
-    def foldLeft[A, B](fa: C#Point[A], b: B)(f: (B, A) => B): B
-    def foldRight[A, B](fa: C#Point[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B]
+  trait Traverser[C <: Effects] {
+    type CC[A] = C#Point[A]
+
+    def traverse[G[_]: Applicative, A, B](ca: CC[A])(f: A => G[B]): G[CC[B]]
+    def foldLeft[A, B](fa: CC[A], b: B)(f: (B, A) => B): B
+    def foldRight[A, B](fa: CC[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B]
   }
 
   object Traverser {
@@ -257,128 +259,140 @@ object Effects {
       def foldRight[A, B](fa: F2[G0, Y, Z, A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = F.foldRight(fa, lb)(f)
     }
 
-    implicit def corecurse1[F[_], C <: Effects](implicit C: Traverser[C], F: Traverse[F]): Traverser[F |: C] = new Traverser[F |: C] {
+    implicit def corecurse1[F[_], C <: Effects](implicit C: Traverser[C], NN: NonNested[C], F: Traverse[F]): Traverser[F |: C] = new Traverser[F |: C] {
 
-      def traverse[G[_]: Applicative, A, B](fca: F[C#Point[A]])(f: A => G[B]): G[F[C#Point[B]]] = {
-        F.traverse(fca) { ca =>
+      def traverse[G[_]: Applicative, A, B](fca: CC[A])(f: A => G[B]): G[CC[B]] = {
+        val back = F.traverse(NN.unpack(fca)) { ca =>
           C.traverse(ca)(f)
         }
+
+        Applicative[G].map(back) { fca2 => NN.pack(fca2) }
       }
 
-      def foldLeft[A, B](fca: F[C#Point[A]], b: B)(f: (B, A) => B): B = {
-        F.foldLeft(fca, b) { (b, ca) =>
+      def foldLeft[A, B](fca: CC[A], b: B)(f: (B, A) => B): B = {
+        F.foldLeft(NN.unpack(fca), b) { (b, ca) =>
           C.foldLeft(ca, b)(f)
         }
       }
 
-      def foldRight[A, B](fca: F[C#Point[A]], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
-        F.foldRight(fca, lb) { (ca, eb) =>
+      def foldRight[A, B](fca: CC[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
+        F.foldRight(NN.unpack(fca), lb) { (ca, eb) =>
           C.foldRight(ca, eb)(f)
         }
       }
 
     }
 
-    implicit def corecurse2[F[_, _], F2[_, _], Z, C <: Effects](implicit ev: Permute2[F, F2], C: Traverser[C], F: Traverse[F2[Z, ?]]): Traverser[F2[Z, ?] |: C] = new Traverser[F2[Z, ?] |: C] {
+    implicit def corecurse2[F[_, _], F2[_, _], Z, C <: Effects](implicit ev: Permute2[F, F2], C: Traverser[C], NN: NonNested[C], F: Traverse[F2[Z, ?]]): Traverser[F2[Z, ?] |: C] = new Traverser[F2[Z, ?] |: C] {
 
-      def traverse[G[_]: Applicative, A, B](fca: F2[Z, C#Point[A]])(f: A => G[B]): G[F2[Z, C#Point[B]]] = {
-        F.traverse(fca) { ca =>
+      def traverse[G[_]: Applicative, A, B](fca: CC[A])(f: A => G[B]): G[CC[B]] = {
+        val back = F.traverse(NN.unpack[F2[Z, ?], A](fca)) { ca =>
           C.traverse(ca)(f)
         }
+
+        Applicative[G].map(back) { fca2 => NN.pack[F2[Z, ?], B](fca2) }
       }
 
-      def foldLeft[A, B](fca: F2[Z, C#Point[A]], b: B)(f: (B, A) => B): B = {
-        F.foldLeft(fca, b) { (b, ca) =>
+      def foldLeft[A, B](fca: CC[A], b: B)(f: (B, A) => B): B = {
+        F.foldLeft(NN.unpack[F2[Z, ?], A](fca), b) { (b, ca) =>
           C.foldLeft(ca, b)(f)
         }
       }
 
-      def foldRight[A, B](fca: F2[Z, C#Point[A]], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
-        F.foldRight(fca, lb) { (ca, eb) =>
+      def foldRight[A, B](fca: CC[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
+        F.foldRight(NN.unpack[F2[Z, ?], A](fca), lb) { (ca, eb) =>
           C.foldRight(ca, eb)(f)
         }
       }
     }
 
-    implicit def corecurse3[F[_, _, _], F2[_, _, _], Y, Z, C <: Effects](implicit ev: Permute3[F, F2], C: Traverser[C], F: Traverse[F2[Y, Z, ?]]): Traverser[F2[Y, Z, ?] |: C] = new Traverser[F2[Y, Z, ?] |: C] {
+    implicit def corecurse3[F[_, _, _], F2[_, _, _], Y, Z, C <: Effects](implicit ev: Permute3[F, F2], C: Traverser[C], NN: NonNested[C], F: Traverse[F2[Y, Z, ?]]): Traverser[F2[Y, Z, ?] |: C] = new Traverser[F2[Y, Z, ?] |: C] {
 
-      def traverse[G[_]: Applicative, A, B](fca: F2[Y, Z, C#Point[A]])(f: A => G[B]): G[F2[Y, Z, C#Point[B]]] = {
-        F.traverse(fca) { ca =>
+      def traverse[G[_]: Applicative, A, B](fca: CC[A])(f: A => G[B]): G[CC[B]] = {
+        val back = F.traverse(NN.unpack[F2[Y, Z, ?], A](fca)) { ca =>
           C.traverse(ca)(f)
         }
+
+        Applicative[G].map(back) { fca2 => NN.pack[F2[Y, Z, ?], B](fca2) }
       }
 
-      def foldLeft[A, B](fca: F2[Y, Z, C#Point[A]], b: B)(f: (B, A) => B): B = {
-        F.foldLeft(fca, b) { (b, ca) =>
+      def foldLeft[A, B](fca: CC[A], b: B)(f: (B, A) => B): B = {
+        F.foldLeft(NN.unpack[F2[Y, Z, ?], A](fca), b) { (b, ca) =>
           C.foldLeft(ca, b)(f)
         }
       }
 
-      def foldRight[A, B](fca: F2[Y, Z, C#Point[A]], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
-        F.foldRight(fca, lb) { (ca, eb) =>
+      def foldRight[A, B](fca: CC[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
+        F.foldRight(NN.unpack[F2[Y, Z, ?], A](fca), lb) { (ca, eb) =>
           C.foldRight(ca, eb)(f)
         }
       }
     }
 
-    implicit def corecurseH1[F[_[_], _], G0[_], C <: Effects](implicit C: Traverser[C], F: Traverse[F[G0, ?]]): Traverser[F[G0, ?] |: C] = new Traverser[F[G0, ?] |: C] {
+    implicit def corecurseH1[F[_[_], _], G0[_], C <: Effects](implicit C: Traverser[C], NN: NonNested[C], F: Traverse[F[G0, ?]]): Traverser[F[G0, ?] |: C] = new Traverser[F[G0, ?] |: C] {
 
-      def traverse[G[_]: Applicative, A, B](fca: F[G0, C#Point[A]])(f: A => G[B]): G[F[G0, C#Point[B]]] = {
-        F.traverse(fca) { ca =>
+      def traverse[G[_]: Applicative, A, B](fca: CC[A])(f: A => G[B]): G[CC[B]] = {
+        val back = F.traverse(NN.unpack[F[G0, ?], A](fca)) { ca =>
           C.traverse(ca)(f)
         }
+
+        Applicative[G].map(back) { fca2 => NN.pack[F[G0, ?], B](fca2) }
       }
 
-      def foldLeft[A, B](fca: F[G0, C#Point[A]], b: B)(f: (B, A) => B): B = {
-        F.foldLeft(fca, b) { (b, ca) =>
+      def foldLeft[A, B](fca: CC[A], b: B)(f: (B, A) => B): B = {
+        F.foldLeft(NN.unpack[F[G0, ?], A](fca), b) { (b, ca) =>
           C.foldLeft(ca, b)(f)
         }
       }
 
-      def foldRight[A, B](fca: F[G0, C#Point[A]], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
-        F.foldRight(fca, lb) { (ca, eb) =>
+      def foldRight[A, B](fca: CC[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
+        F.foldRight(NN.unpack[F[G0, ?], A](fca), lb) { (ca, eb) =>
           C.foldRight(ca, eb)(f)
         }
       }
     }
 
-    implicit def corecurseH2[F[_[_], _, _], F2[_[_], _, _], G0[_], Z, C <: Effects](implicit ev: PermuteH2[F, F2], C: Traverser[C], F: Traverse[F[G0, Z, ?]]): Traverser[F[G0, Z, ?] |: C] = new Traverser[F[G0, Z, ?] |: C] {
+    implicit def corecurseH2[F[_[_], _, _], F2[_[_], _, _], G0[_], Z, C <: Effects](implicit ev: PermuteH2[F, F2], C: Traverser[C], NN: NonNested[C], F: Traverse[F2[G0, Z, ?]]): Traverser[F2[G0, Z, ?] |: C] = new Traverser[F2[G0, Z, ?] |: C] {
 
-      def traverse[G[_]: Applicative, A, B](fca: F[G0, Z, C#Point[A]])(f: A => G[B]): G[F[G0, Z, C#Point[B]]] = {
-        F.traverse(fca) { ca =>
+      def traverse[G[_]: Applicative, A, B](fca: CC[A])(f: A => G[B]): G[CC[B]] = {
+        val back = F.traverse(NN.unpack[F2[G0, Z, ?], A](fca)) { ca =>
           C.traverse(ca)(f)
         }
+
+        Applicative[G].map(back) { fca2 => NN.pack[F2[G0, Z, ?], B](fca2) }
       }
 
-      def foldLeft[A, B](fca: F[G0, Z, C#Point[A]], b: B)(f: (B, A) => B): B = {
-        F.foldLeft(fca, b) { (b, ca) =>
+      def foldLeft[A, B](fca: CC[A], b: B)(f: (B, A) => B): B = {
+        F.foldLeft(NN.unpack[F2[G0, Z, ?], A](fca), b) { (b, ca) =>
           C.foldLeft(ca, b)(f)
         }
       }
 
-      def foldRight[A, B](fca: F[G0, Z, C#Point[A]], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
-        F.foldRight(fca, lb) { (ca, eb) =>
+      def foldRight[A, B](fca: CC[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
+        F.foldRight(NN.unpack[F2[G0, Z, ?], A](fca), lb) { (ca, eb) =>
           C.foldRight(ca, eb)(f)
         }
       }
     }
 
-    implicit def corecurseH3[F[_[_], _, _, _], F2[_[_], _, _, _], G0[_], Y, Z, C <: Effects](implicit ev: PermuteH3[F, F2], C: Traverser[C], F: Traverse[F[G0, Y, Z, ?]]): Traverser[F[G0, Y, Z, ?] |: C] = new Traverser[F[G0, Y, Z, ?] |: C] {
+    implicit def corecurseH3[F[_[_], _, _, _], F2[_[_], _, _, _], G0[_], Y, Z, C <: Effects](implicit ev: PermuteH3[F, F2], C: Traverser[C], NN: NonNested[C], F: Traverse[F2[G0, Y, Z, ?]]): Traverser[F2[G0, Y, Z, ?] |: C] = new Traverser[F2[G0, Y, Z, ?] |: C] {
 
-      def traverse[G[_]: Applicative, A, B](fca: F[G0, Y, Z, C#Point[A]])(f: A => G[B]): G[F[G0, Y, Z, C#Point[B]]] = {
-        F.traverse(fca) { ca =>
+      def traverse[G[_]: Applicative, A, B](fca: CC[A])(f: A => G[B]): G[CC[B]] = {
+        val back = F.traverse(NN.unpack[F2[G0, Y, Z, ?], A](fca)) { ca =>
           C.traverse(ca)(f)
         }
+
+        Applicative[G].map(back) { fca2 => NN.pack[F2[G0, Y, Z, ?], B](fca2) }
       }
 
-      def foldLeft[A, B](fca: F[G0, Y, Z, C#Point[A]], b: B)(f: (B, A) => B): B = {
-        F.foldLeft(fca, b) { (b, ca) =>
+      def foldLeft[A, B](fca: CC[A], b: B)(f: (B, A) => B): B = {
+        F.foldLeft(NN.unpack[F2[G0, Y, Z, ?], A](fca), b) { (b, ca) =>
           C.foldLeft(ca, b)(f)
         }
       }
 
-      def foldRight[A, B](fca: F[G0, Y, Z, C#Point[A]], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
-        F.foldRight(fca, lb) { (ca, eb) =>
+      def foldRight[A, B](fca: CC[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = {
+        F.foldRight(NN.unpack[F2[G0, Y, Z, ?], A](fca), lb) { (ca, eb) =>
           C.foldRight(ca, eb)(f)
         }
       }
@@ -502,7 +516,7 @@ object Effects {
     }
   }
 
-  trait Expander[C <: Effects] {
+  /*trait Expander[C <: Effects] {
     type CC[_]
     type Out <: Effects
 
@@ -974,10 +988,10 @@ final case class Emm[C <: Effects, A](run: C#Point[A]) {
 
   def map[B](f: A => B)(implicit C: Mapper[C]): Emm[C, B] = Emm(C.map(run)(f))
 
-/*  def flatMap[B](f: A => Emm[C, B])(implicit B: Binder[C]): Emm[C, B] =
+  def flatMap[B](f: A => Emm[C, B])(implicit B: Binder[C]): Emm[C, B] =
     Emm(B.bind(run) { a => f(a).run })
 
-  def flatMapM[E](f: A => E)(implicit E: Lifter[E, C], B: Binder[C]): Emm[C, E.Out] =
+/*  def flatMapM[E](f: A => E)(implicit E: Lifter[E, C], B: Binder[C]): Emm[C, E.Out] =
     flatMap { a => Emm(E(f(a))) }
 
   def expand(implicit C: Expander[C]): Emm[C.Out, C.CC[A]] = Emm(C(run))

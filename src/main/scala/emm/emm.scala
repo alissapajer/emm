@@ -32,36 +32,12 @@ object Properties {
     def unpack[CC[_], A](cc: C#Build[CC, A]): CC[C#Point[A]]
   }
 
+
   object NonNested {
 
-    implicit def head1[F[_]]: NonNested[F |: Base] = new NonNested[F |: Base] {
-      def pack[CC[_], A](cc: CC[F[A]]) = cc
-      def unpack[CC[_], A](cc: CC[F[A]]) = cc
-    }
-
-    implicit def head2[F[_, _], F2[_, _], Z](implicit ev: Permute2[F, F2]): NonNested[F2[Z, ?] |: Base] = new NonNested[F2[Z, ?] |: Base] {
-      def pack[CC[_], A](cc: CC[F2[Z, A]]) = cc
-      def unpack[CC[_], A](cc: CC[F2[Z, A]]) = cc
-    }
-
-    implicit def head3[F[_, _, _], F2[_, _, _], Y, Z](implicit ev: Permute3[F, F2]): NonNested[F2[Y, Z, ?] |: Base] = new NonNested[F2[Y, Z, ?] |: Base] {
-      def pack[CC[_], A](cc: CC[F2[Y, Z, A]]) = cc
-      def unpack[CC[_], A](cc: CC[F2[Y, Z, A]]) = cc
-    }
-
-    implicit def headH1[F[_[_], _], G[_]]: NonNested[F[G, ?] |: Base] = new NonNested[F[G, ?] |: Base] {
-      def pack[CC[_], A](cc: CC[F[G, A]]) = cc
-      def unpack[CC[_], A](cc: CC[F[G, A]]) = cc
-    }
-
-    implicit def headH2[F[_[_], _, _], F2[_[_], _, _], G[_], Z](implicit ev: PermuteH2[F, F2]): NonNested[F2[G, Z, ?] |: Base] = new NonNested[F2[G, Z, ?] |: Base] {
-      def pack[CC[_], A](cc: CC[F2[G, Z, A]]) = cc
-      def unpack[CC[_], A](cc: CC[F2[G, Z, A]]) = cc
-    }
-
-    implicit def headH3[F[_[_], _, _, _], F2[_[_], _, _, _], G[_], Y, Z](implicit ev: PermuteH3[F, F2]): NonNested[F2[G, Y, Z, ?] |: Base] = new NonNested[F2[G, Y, Z, ?] |: Base] {
-      def pack[CC[_], A](cc: CC[F2[G, Y, Z, A]]) = cc
-      def unpack[CC[_], A](cc: CC[F2[G, Y, Z, A]]) = cc
+    implicit def base: NonNested[Base] = new NonNested[Base] {
+      def pack[CC[_], A](cc: CC[A]) = cc
+      def unpack[CC[_], A](cc: CC[A]) = cc
     }
 
     implicit def corecurse1[F[_], C <: Effects](implicit C: NonNested[C]): NonNested[F |: C] = new NonNested[F |: C] {
@@ -177,46 +153,9 @@ object Effects {
 
   object Mapper extends MapperLowPriorityImplicits {
 
-    implicit def head1[F[_]](implicit F: Applicative[F]): Mapper[F |: Base] = new Mapper[F |: Base] {
-
-      def point[A](a: A) = F.pure(a)
-
-      def map[A, B](fa: F[A])(f: A => B): F[B] = F.map(fa)(f)
-    }
-
-    implicit def head2[F[_, _], F2[_, _], Z](implicit ev: Permute2[F, F2], F: Applicative[F2[Z, ?]]): Mapper[F2[Z, ?] |: Base] = new Mapper[F2[Z, ?] |: Base] {
-
-      def point[A](a: A) = F.pure(a)
-
-      def map[A, B](fa: F2[Z, A])(f: A => B) = F.map(fa)(f)
-    }
-
-    implicit def head3[F[_, _, _], F2[_, _, _], Y, Z](implicit ev: Permute3[F, F2], F: Applicative[F2[Y, Z, ?]]): Mapper[F2[Y, Z, ?] |: Base] = new Mapper[F2[Y, Z, ?] |: Base] {
-
-      def point[A](a: A) = F.pure(a)
-
-      def map[A, B](fa: F2[Y, Z, A])(f: A => B) = F.map(fa)(f)
-    }
-
-    implicit def headH1[F[_[_], _], G[_]](implicit F: Applicative[F[G, ?]]): Mapper[F[G, ?] |: Base] = new Mapper[F[G, ?] |: Base] {
-
-      def point[A](a: A) = F.pure(a)
-
-      def map[A, B](fa: F[G, A])(f: A => B): F[G, B] = F.map(fa)(f)
-    }
-
-    implicit def headH2[F[_[_], _, _], F2[_[_], _, _], G[_], Z](implicit ev: PermuteH2[F, F2], F: Applicative[F2[G, Z, ?]]): Mapper[F2[G, Z, ?] |: Base] = new Mapper[F2[G, Z, ?] |: Base] {
-
-      def point[A](a: A) = F.pure(a)
-
-      def map[A, B](fa: F2[G, Z, A])(f: A => B): F2[G, Z, B] = F.map(fa)(f)
-    }
-
-    implicit def headH3[F[_[_], _, _, _], F2[_[_], _, _, _], G[_], Y, Z](implicit ev: PermuteH3[F, F2], F: Applicative[F2[G, Y, Z, ?]]): Mapper[F2[G, Y, Z, ?] |: Base] = new Mapper[F2[G, Y, Z, ?] |: Base] {
-
-      def point[A](a: A) = F.pure(a)
-
-      def map[A, B](fa: F2[G, Y, Z, A])(f: A => B): F2[G, Y, Z, B] = F.map(fa)(f)
+    implicit def base: Mapper[Base] = new Mapper[Base] {
+      def point[A](a: A) = a
+      def map[A, B](fa: A)(f: A => B) = f(fa)
     }
 
     implicit def corecurse1[F[_], C <: Effects](implicit P: Mapper[C], NN: NonNested[C], F: Applicative[F]): Mapper[F |: C] = new Mapper[F |: C] {
@@ -523,7 +462,7 @@ object Effects {
           F.map(fcaca) { caca => C.bind(caca) { a => a } }
         }
 
-        NN.pack(back) 
+        NN.pack(back)
       }
     }
 

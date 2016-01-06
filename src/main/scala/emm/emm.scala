@@ -225,40 +225,10 @@ object Effects {
 
   object Traverser {
 
-    implicit def head1[F[_]](implicit F: Traverse[F]): Traverser[F |: Base] = new Traverser[F |: Base] {
-      def traverse[G[_]: Applicative, A, B](fa: F[A])(f: A => G[B]): G[F[B]] = F.traverse(fa)(f)
-      def foldLeft[A, B](fa: F[A], b: B)(f: (B, A) => B): B = F.foldLeft(fa, b)(f)
-      def foldRight[A, B](fa: F[A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = F.foldRight(fa, lb)(f)
-    }
-
-    implicit def head2[F[_, _], F2[_, _], Z](implicit ev: Permute2[F, F2], F: Traverse[F2[Z, ?]]): Traverser[F2[Z, ?] |: Base] = new Traverser[F2[Z, ?] |: Base] {
-      def traverse[G[_]: Applicative, A, B](fa: F2[Z, A])(f: A => G[B]): G[F2[Z, B]] = F.traverse(fa)(f)
-      def foldLeft[A, B](fa: F2[Z, A], b: B)(f: (B, A) => B): B = F.foldLeft(fa, b)(f)
-      def foldRight[A, B](fa: F2[Z, A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = F.foldRight(fa, lb)(f)
-    }
-
-    implicit def head3[F[_, _, _], F2[_, _, _], Y, Z](implicit ev: Permute3[F, F2], F: Traverse[F2[Y, Z, ?]]): Traverser[F2[Y, Z, ?] |: Base] = new Traverser[F2[Y, Z, ?] |: Base] {
-      def traverse[G[_]: Applicative, A, B](fa: F2[Y, Z, A])(f: A => G[B]): G[F2[Y, Z, B]] = F.traverse(fa)(f)
-      def foldLeft[A, B](fa: F2[Y, Z, A], b: B)(f: (B, A) => B): B = F.foldLeft(fa, b)(f)
-      def foldRight[A, B](fa: F2[Y, Z, A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = F.foldRight(fa, lb)(f)
-    }
-
-    implicit def headH1[F[_[_], _], G0[_]](implicit F: Traverse[F[G0, ?]]): Traverser[F[G0, ?] |: Base] = new Traverser[F[G0, ?] |: Base] {
-      def traverse[G[_]: Applicative, A, B](fa: F[G0, A])(f: A => G[B]): G[F[G0, B]] = F.traverse(fa)(f)
-      def foldLeft[A, B](fa: F[G0, A], b: B)(f: (B, A) => B): B = F.foldLeft(fa, b)(f)
-      def foldRight[A, B](fa: F[G0, A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = F.foldRight(fa, lb)(f)
-    }
-
-    implicit def headH2[F[_[_], _, _], F2[_[_], _, _], G0[_], Z](implicit ev: PermuteH2[F, F2], F: Traverse[F2[G0, Z, ?]]): Traverser[F2[G0, Z, ?] |: Base] = new Traverser[F2[G0, Z, ?] |: Base] {
-      def traverse[G[_]: Applicative, A, B](fa: F2[G0, Z, A])(f: A => G[B]): G[F2[G0, Z, B]] = F.traverse(fa)(f)
-      def foldLeft[A, B](fa: F2[G0, Z, A], b: B)(f: (B, A) => B): B = F.foldLeft(fa, b)(f)
-      def foldRight[A, B](fa: F2[G0, Z, A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = F.foldRight(fa, lb)(f)
-    }
-
-    implicit def headH3[F[_[_], _, _, _], F2[_[_], _, _, _], G0[_], Y, Z](implicit ev: PermuteH3[F, F2], F: Traverse[F2[G0, Y, Z, ?]]): Traverser[F2[G0, Y, Z, ?] |: Base] = new Traverser[F2[G0, Y, Z, ?] |: Base] {
-      def traverse[G[_]: Applicative, A, B](fa: F2[G0, Y, Z, A])(f: A => G[B]): G[F2[G0, Y, Z, B]] = F.traverse(fa)(f)
-      def foldLeft[A, B](fa: F2[G0, Y, Z, A], b: B)(f: (B, A) => B): B = F.foldLeft(fa, b)(f)
-      def foldRight[A, B](fa: F2[G0, Y, Z, A], lb: Eval[B])(f: (A, Eval[B]) => Eval[B]): Eval[B] = F.foldRight(fa, lb)(f)
+    implicit def base: Traverser[Base] = new Traverser[Base] {
+      def traverse[G[_]: Applicative, A, B](fa: A)(f: A => G[B]): G[B] = f(fa)
+      def foldLeft[A, B](fa: A, b: B)(f: (B, A) => B) = f(b, fa)
+      def foldRight[A, B](fa: A, b: Eval[B])(f: (A, Eval[B]) => Eval[B]) = f(fa, b)
     }
 
     implicit def corecurse1[F[_], C <: Effects](implicit C: Traverser[C], NN: NonNested[C], F: Traverse[F]): Traverser[F |: C] = new Traverser[F |: C] {
@@ -429,28 +399,8 @@ object Effects {
 
   object Binder extends BinderLowPriorityImplicits {
 
-    implicit def head1[F[_]](implicit F: FlatMap[F]): Binder[F |: Base] = new Binder[F |: Base] {
-      def bind[A, B](fa: F[A])(f: A => F[B]): F[B] = F.flatMap(fa)(f)
-    }
-
-    implicit def head2[F[_, _], F2[_, _], Z](implicit ev: Permute2[F, F2], F: FlatMap[F2[Z, ?]]): Binder[F2[Z, ?] |: Base] = new Binder[F2[Z, ?] |: Base] {
-      def bind[A, B](fa: F2[Z, A])(f: A => F2[Z, B]) = F.flatMap(fa)(f)
-    }
-
-    implicit def head3[F[_, _, _], F2[_, _, _], Y, Z](implicit ev: Permute3[F, F2], F: FlatMap[F2[Y, Z, ?]]): Binder[F2[Y, Z, ?] |: Base] = new Binder[F2[Y, Z, ?] |: Base] {
-      def bind[A, B](fa: F2[Y, Z, A])(f: A => F2[Y, Z, B]) = F.flatMap(fa)(f)
-    }
-
-    implicit def headH1[F[_[_], _], G[_]](implicit F: FlatMap[F[G, ?]]): Binder[F[G, ?] |: Base] = new Binder[F[G, ?] |: Base] {
-      def bind[A, B](fa: F[G, A])(f: A => F[G, B]): F[G, B] = F.flatMap(fa)(f)
-    }
-
-    implicit def headH2[F[_[_], _, _], F2[_[_], _, _], G[_], Z](implicit ev: PermuteH2[F, F2], F: FlatMap[F2[G, Z, ?]]): Binder[F2[G, Z, ?] |: Base] = new Binder[F2[G, Z, ?] |: Base] {
-      def bind[A, B](fa: F2[G, Z, A])(f: A => F2[G, Z, B]): F2[G, Z, B] = F.flatMap(fa)(f)
-    }
-
-    implicit def headH3[F[_[_], _, _, _], F2[_[_], _, _, _], G[_], Y, Z](implicit ev: PermuteH3[F, F2], F: FlatMap[F2[G, Y, Z, ?]]): Binder[F2[G, Y, Z, ?] |: Base] = new Binder[F2[G, Y, Z, ?] |: Base] {
-      def bind[A, B](fa: F2[G, Y, Z, A])(f: A => F2[G, Y, Z, B]): F2[G, Y, Z, B] = F.flatMap(fa)(f)
+    implicit def base: Binder[Base] = new Binder[Base] {
+      def bind[A, B](fa: A)(f: A => B): B = f(fa)
     }
 
     implicit def corecurse1[F[_], C <: Effects](implicit C: Binder[C], T: Traverser[C], NN: NonNested[C], F: Applicative[F], B: FlatMap[F]): Binder[F |: C] = new Binder[F |: C] {

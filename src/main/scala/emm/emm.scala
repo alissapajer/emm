@@ -34,15 +34,64 @@ object Properties {
 
   object NonNested {
 
-    // TODO other cases
-    implicit def head[F[_]]: NonNested[F |: Base] = new NonNested[F |: Base] {
+    implicit def head1[F[_]]: NonNested[F |: Base] = new NonNested[F |: Base] {
       def pack[CC[_], A](cc: CC[F[A]]) = cc
       def unpack[CC[_], A](cc: CC[F[A]]) = cc
     }
 
-    implicit def corecurse[F[_], C <: Effects](implicit C: NonNested[C]): NonNested[F |: C] = new NonNested[F |: C] {
+    implicit def head2[F[_, _], F2[_, _], Z](implicit ev: Permute2[F, F2]): NonNested[F2[Z, ?] |: Base] = new NonNested[F2[Z, ?] |: Base] {
+      def pack[CC[_], A](cc: CC[F2[Z, A]]) = cc
+      def unpack[CC[_], A](cc: CC[F2[Z, A]]) = cc
+    }
+
+    implicit def head3[F[_, _, _], F2[_, _, _], Y, Z](implicit ev: Permute3[F, F2]): NonNested[F2[Y, Z, ?] |: Base] = new NonNested[F2[Y, Z, ?] |: Base] {
+      def pack[CC[_], A](cc: CC[F2[Y, Z, A]]) = cc
+      def unpack[CC[_], A](cc: CC[F2[Y, Z, A]]) = cc
+    }
+
+    implicit def headH1[F[_[_], _], G[_]]: NonNested[F[G, ?] |: Base] = new NonNested[F[G, ?] |: Base] {
+      def pack[CC[_], A](cc: CC[F[G, A]]) = cc
+      def unpack[CC[_], A](cc: CC[F[G, A]]) = cc
+    }
+
+    implicit def headH2[F[_[_], _, _], F2[_[_], _, _], G[_], Z](implicit ev: PermuteH2[F, F2]): NonNested[F2[G, Z, ?] |: Base] = new NonNested[F2[G, Z, ?] |: Base] {
+      def pack[CC[_], A](cc: CC[F2[G, Z, A]]) = cc
+      def unpack[CC[_], A](cc: CC[F2[G, Z, A]]) = cc
+    }
+
+    implicit def headH3[F[_[_], _, _, _], F2[_[_], _, _, _], G[_], Y, Z](implicit ev: PermuteH3[F, F2]): NonNested[F2[G, Y, Z, ?] |: Base] = new NonNested[F2[G, Y, Z, ?] |: Base] {
+      def pack[CC[_], A](cc: CC[F2[G, Y, Z, A]]) = cc
+      def unpack[CC[_], A](cc: CC[F2[G, Y, Z, A]]) = cc
+    }
+
+    implicit def corecurse1[F[_], C <: Effects](implicit C: NonNested[C]): NonNested[F |: C] = new NonNested[F |: C] {
       def pack[CC[_], A](cc: CC[(F |: C)#Point[A]]) = cc.asInstanceOf[(F |: C)#Build[CC, A]]
       def unpack[CC[_], A](cc: (F |: C)#Build[CC, A]) = cc.asInstanceOf[CC[(F |: C)#Point[A]]]
+    }
+
+    implicit def corecurse2[F[_, _], F2[_, _], Z, C <: Effects](implicit ev: Permute2[F, F2], C: NonNested[C]): NonNested[F2[Z, ?] |: C] = new NonNested[F2[Z, ?] |: C] {
+      def pack[CC[_], A](cc: CC[(F2[Z, ?] |: C)#Point[A]]) = cc.asInstanceOf[(F2[Z, ?] |: C)#Build[CC, A]]
+      def unpack[CC[_], A](cc: (F2[Z, ?] |: C)#Build[CC, A]) = cc.asInstanceOf[CC[(F2[Z, ?] |: C)#Point[A]]]
+    }
+
+    implicit def corecurse3[F[_, _, _], F2[_, _, _], Y, Z, C <: Effects](implicit ev: Permute3[F, F2], C: NonNested[C]): NonNested[F2[Y, Z, ?] |: C] = new NonNested[F2[Y, Z, ?] |: C] {
+      def pack[CC[_], A](cc: CC[(F2[Y, Z, ?] |: C)#Point[A]]) = cc.asInstanceOf[(F2[Y, Z, ?] |: C)#Build[CC, A]]
+      def unpack[CC[_], A](cc: (F2[Y, Z, ?] |: C)#Build[CC, A]) = cc.asInstanceOf[CC[(F2[Y, Z, ?] |: C)#Point[A]]]
+    }
+
+    implicit def corecurseH1[F[_[_], _], G[_], C <: Effects](implicit C: NonNested[C]): NonNested[F[G, ?] |: C] = new NonNested[F[G, ?] |: C] {
+      def pack[CC[_], A](cc: CC[(F[G, ?] |: C)#Point[A]]) = cc.asInstanceOf[(F[G, ?] |: C)#Build[CC, A]]
+      def unpack[CC[_], A](cc: (F[G, ?] |: C)#Build[CC, A]) = cc.asInstanceOf[CC[(F[G, ?] |: C)#Point[A]]]
+    }
+
+    implicit def corecurseH2[F[_[_], _, _], F2[_[_], _, _], G[_], Z, C <: Effects](implicit ev: PermuteH2[F, F2], C: NonNested[C]): NonNested[F2[G, Z, ?] |: C] = new NonNested[F2[G, Z, ?] |: C] {
+      def pack[CC[_], A](cc: CC[(F2[G, Z, ?] |: C)#Point[A]]) = cc.asInstanceOf[(F2[G, Z, ?] |: C)#Build[CC, A]]
+      def unpack[CC[_], A](cc: (F2[G, Z, ?] |: C)#Build[CC, A]) = cc.asInstanceOf[CC[(F2[G, Z, ?] |: C)#Point[A]]]
+    }
+
+    implicit def corecurseH3[F[_[_], _, _, _], F2[_[_], _, _, _], G[_], Y, Z, C <: Effects](implicit ev: PermuteH3[F, F2], C: NonNested[C]): NonNested[F2[G, Y, Z, ?] |: C] = new NonNested[F2[G, Y, Z, ?] |: C] {
+      def pack[CC[_], A](cc: CC[(F2[G, Y, Z, ?] |: C)#Point[A]]) = cc.asInstanceOf[(F2[G, Y, Z, ?] |: C)#Build[CC, A]]
+      def unpack[CC[_], A](cc: (F2[G, Y, Z, ?] |: C)#Build[CC, A]) = cc.asInstanceOf[CC[(F2[G, Y, Z, ?] |: C)#Point[A]]]
     }
   }
 
@@ -59,11 +108,25 @@ object Properties {
 
   object NestedAtPoint {
 
-    implicit def split[Pivot[_[_], _], C <: Effects](implicit C: NonNested[C]): NestedAtPoint[Pivot -|: C, Pivot, Base, C] = new NestedAtPoint[Pivot -|: C, Pivot, Base, C] {
+    implicit def split1[Pivot[_[_], _], C <: Effects](implicit C: NonNested[C]): NestedAtPoint[Pivot -|: C, Pivot, Base, C] = new NestedAtPoint[Pivot -|: C, Pivot, Base, C] {
       def NN = C
 
       def pack[A](cc: Pivot[λ[X => X], C#Point[A]]): (Pivot -|: C)#Point[A] = cc.asInstanceOf[(Pivot -|: C)#Point[A]]
       def unpack[A](cc: (Pivot -|: C)#Point[A]): Pivot[λ[X => X], C#Point[A]] = cc.asInstanceOf[Pivot[λ[X => X], C#Point[A]]]
+    }
+
+    implicit def split2[Pivot[_[_], _, _], Pivot2[_[_], _, _], Z, C <: Effects](implicit ev: PermuteH2[Pivot, Pivot2], C: NonNested[C]): NestedAtPoint[Pivot2[?[_], Z, ?] -|: C, Pivot2[?[_], Z, ?], Base, C] = new NestedAtPoint[Pivot2[?[_], Z, ?] -|: C, Pivot2[?[_], Z, ?], Base, C] {
+      def NN = C
+
+      def pack[A](cc: Pivot2[λ[X => X], Z, C#Point[A]]): (Pivot2[?[_], Z, ?] -|: C)#Point[A] = cc.asInstanceOf[(Pivot2[?[_], Z, ?] -|: C)#Point[A]]
+      def unpack[A](cc: (Pivot2[?[_], Z, ?] -|: C)#Point[A]): Pivot2[λ[X => X], Z, C#Point[A]] = cc.asInstanceOf[Pivot2[λ[X => X], Z, C#Point[A]]]
+    }
+
+    implicit def split3[Pivot[_[_], _, _, _], Pivot2[_[_], _, _, _], Y, Z, C <: Effects](implicit ev: PermuteH3[Pivot, Pivot2], C: NonNested[C]): NestedAtPoint[Pivot2[?[_], Y, Z, ?] -|: C, Pivot2[?[_], Y, Z, ?], Base, C] = new NestedAtPoint[Pivot2[?[_], Y, Z, ?] -|: C, Pivot2[?[_], Y, Z, ?], Base, C] {
+      def NN = C
+
+      def pack[A](cc: Pivot2[λ[X => X], Y, Z, C#Point[A]]): (Pivot2[?[_], Y, Z, ?] -|: C)#Point[A] = cc.asInstanceOf[(Pivot2[?[_], Y, Z, ?] -|: C)#Point[A]]
+      def unpack[A](cc: (Pivot2[?[_], Y, Z, ?] -|: C)#Point[A]): Pivot2[λ[X => X], Y, Z, C#Point[A]] = cc.asInstanceOf[Pivot2[λ[X => X], Y, Z, C#Point[A]]]
     }
 
     implicit def corecurseBar[G[_], Pivot[_[_], _], C <: Effects, F <: Effects, T <: Effects](implicit C: NestedAtPoint[C, Pivot, F, T]): NestedAtPoint[G |: C, Pivot, G |: F, T] = new NestedAtPoint[G |: C, Pivot, G |: F, T] {

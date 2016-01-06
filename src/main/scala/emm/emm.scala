@@ -401,13 +401,15 @@ object Effects {
 
   @implicitNotFound("could not prove ${C} is a valid monadic stack; perhaps an effect is lacking a FlatMap, or a non-outer effect is lacking a Traverse")
   trait Binder[C <: Effects] {
-    def bind[A, B](cca: C#Point[A])(f: A => C#Point[B]): C#Point[B]
+    type CC[A] = C#Point[A]
+
+    def bind[A, B](cca: CC[A])(f: A => CC[B]): CC[B]
   }
 
   trait BinderLowPriorityImplicits {
     import cats.state.State
 
-    implicit def headState[S]: Binder[State[S, ?] |: Base] = new Binder[State[S, ?] |: Base] {
+    /*implicit def headState[S]: Binder[State[S, ?] |: Base] = new Binder[State[S, ?] |: Base] {
       def bind[A, B](fa: State[S, A])(f: A => State[S, B]) = fa flatMap f
     }
 
@@ -420,7 +422,7 @@ object Effects {
           scca map { cca => C.bind(cca) { a => a } }
         }
       }
-    }
+    }*/
   }
 
   object Binder extends BinderLowPriorityImplicits {

@@ -484,36 +484,42 @@ object Effects {
       }
     }
 
-    implicit def corecurseH1[F[_[_], _], G[_], C <: Effects](implicit C: Binder[C], T: Traverser[C], F: Applicative[F[G, ?]], B: FlatMap[F[G, ?]]): Binder[F[G, ?] |: C] = new Binder[F[G, ?] |: C] {
+    implicit def corecurseH1[F[_[_], _], G[_], C <: Effects](implicit C: Binder[C], T: Traverser[C], NN: NonNested[C], F: Applicative[F[G, ?]], B: FlatMap[F[G, ?]]): Binder[F[G, ?] |: C] = new Binder[F[G, ?] |: C] {
 
-      def bind[A, B](fca: F[G, C#Point[A]])(f: A => F[G, C#Point[B]]): F[G, C#Point[B]] = {
-        B.flatMap(fca) { ca =>
-          val fcaca = T.traverse[F[G, ?], A, C#Point[B]](ca) { a => f(a) }
+      def bind[A, B](fca: CC[A])(f: A => CC[B]): CC[B] = {
+        val back = B.flatMap(NN.unpack[F[G, ?], A](fca)) { ca =>
+          val fcaca = T.traverse[F[G, ?], A, C#Point[B]](ca) { a => NN.unpack[F[G, ?], B](f(a)) }
 
           F.map(fcaca) { caca => C.bind(caca) { a => a } }
         }
+
+        NN.pack[F[G, ?], B](back)
       }
     }
 
-    implicit def corecurseH2[F[_[_], _, _], F2[_[_], _, _], G[_], Z, C <: Effects](implicit ev: PermuteH2[F, F2], C: Binder[C], T: Traverser[C], F: Applicative[F2[G, Z, ?]], B: FlatMap[F2[G, Z, ?]]): Binder[F2[G, Z, ?] |: C] = new Binder[F2[G, Z, ?] |: C] {
+    implicit def corecurseH2[F[_[_], _, _], F2[_[_], _, _], G[_], Z, C <: Effects](implicit ev: PermuteH2[F, F2], C: Binder[C], T: Traverser[C], NN: NonNested[C], F: Applicative[F2[G, Z, ?]], B: FlatMap[F2[G, Z, ?]]): Binder[F2[G, Z, ?] |: C] = new Binder[F2[G, Z, ?] |: C] {
 
-      def bind[A, B](fca: F2[G, Z, C#Point[A]])(f: A => F2[G, Z, C#Point[B]]): F2[G, Z, C#Point[B]] = {
-        B.flatMap(fca) { ca =>
-          val fcaca = T.traverse[F2[G, Z, ?], A, C#Point[B]](ca) { a => f(a) }
+      def bind[A, B](fca: CC[A])(f: A => CC[B]): CC[B] = {
+        val back = B.flatMap(NN.unpack[F2[G, Z, ?], A](fca)) { ca =>
+          val fcaca = T.traverse[F2[G, Z, ?], A, C#Point[B]](ca) { a => NN.unpack[F2[G, Z, ?], B](f(a)) }
 
           F.map(fcaca) { caca => C.bind(caca) { a => a } }
         }
+
+        NN.pack[F2[G, Z, ?], B](back)
       }
     }
 
-    implicit def corecurseH3[F[_[_], _, _, _], F2[_[_], _, _, _], G[_], Y, Z, C <: Effects](implicit ev: PermuteH3[F, F2], C: Binder[C], T: Traverser[C], F: Applicative[F2[G, Y, Z, ?]], B: FlatMap[F2[G, Y, Z, ?]]): Binder[F2[G, Y, Z, ?] |: C] = new Binder[F2[G, Y, Z, ?] |: C] {
+    implicit def corecurseH3[F[_[_], _, _, _], F2[_[_], _, _, _], G[_], Y, Z, C <: Effects](implicit ev: PermuteH3[F, F2], C: Binder[C], T: Traverser[C], NN: NonNested[C], F: Applicative[F2[G, Y, Z, ?]], B: FlatMap[F2[G, Y, Z, ?]]): Binder[F2[G, Y, Z, ?] |: C] = new Binder[F2[G, Y, Z, ?] |: C] {
 
-      def bind[A, B](fca: F2[G, Y, Z, C#Point[A]])(f: A => F2[G, Y, Z, C#Point[B]]): F2[G, Y, Z, C#Point[B]] = {
-        B.flatMap(fca) { ca =>
-          val fcaca = T.traverse[F2[G, Y, Z, ?], A, C#Point[B]](ca) { a => f(a) }
+      def bind[A, B](fca: CC[A])(f: A => CC[B]): CC[B] = {
+        val back = B.flatMap(NN.unpack[F2[G, Y, Z, ?], A](fca)) { ca =>
+          val fcaca = T.traverse[F2[G, Y, Z, ?], A, C#Point[B]](ca) { a => NN.unpack[F2[G, Y, Z, ?], B](f(a)) }
 
           F.map(fcaca) { caca => C.bind(caca) { a => a } }
         }
+
+        NN.pack[F2[G, Y, Z, ?], B](back)
       }
     }
   }
